@@ -16,10 +16,11 @@
 #include "ShaderProgram.h"
 #include "SheetSprite.h"
 #include <vector>
-#define FIXED_TIMESTEP 1.0f
+#include <cmath>
+#define FIXED_TIMESTEP .01f
 
 using namespace std;
-
+int minIndex = 0;
 SDL_Window* displayWindow;
 void DrawText(ShaderProgram *program, int fontTexture, string text, float size, float spacing) {
     float texture_size = 1.0/16.0f;
@@ -121,12 +122,13 @@ vector<Entity *>  getSprites(){
     }
     return ships;
 }
+//Function to detect top bottom collision between entities
 bool detectCollision(Entity * a, Entity * b){
     //Top of a collides with bottom of b
-    if((a->position.x+b->position.x/2<=.1) && (a->position.y + a->sprite.size/2) > (b->position.y - b->sprite.size/2))
+    if(abs(a->position.x - b->position.x) < .05 && (a->position.y + a->sprite.size/2) > (b->position.y - b->sprite.size/2) )
         return true;
     //Bottom of a collides with top of b
-    else if((a->position.x+b->position.x/2<=.1)&&(a->position.y - a->sprite.size/2) > (b->position.y + b->sprite.size/2))
+    else if(abs(a->position.x - b->position.x) < .05 && (a->position.y - a->sprite.size/2) > (b->position.y + b->sprite.size/2) )
         return true;
     
     //No collision
@@ -150,10 +152,23 @@ public:
 };
 //Updates gameState
 void updateGame(GameState &state, float elapsed){
+    
+    //Move the state up one state
+    for(size_t i = 0; i < state.enemies.size(); i++){
+        if(state.enemies[i]== nullptr){continue;}
+        state.enemies[i]->position.x += elapsed * state.enemies[i]->velocity.x;
+    }
+    //Move the bullets up one state
+    for(size_t i = 0; i < state.bullets.size(); i++){
+        if(state.bullets[i] == nullptr){continue;}
+        state.bullets[i]->position.y += elapsed * state.bullets[i]->velocity.y;
+    }
+    
     bool collides = false;
     //Check if collides with a border
     for(size_t i = 0; i < state.enemies.size(); i++){
-        if(state.enemies[i]->position.x >= 4.8f || state.enemies[i]->position.x <= -4.8){
+        if(state.enemies[i] == nullptr){continue;}
+        if(state.enemies[i]->position.x  + .1 >= 4.9f || state.enemies[i]->position.x - .1 <= -4.9){
             collides = true;
             break;
         }
@@ -161,53 +176,15 @@ void updateGame(GameState &state, float elapsed){
     //Update the velocity if it does collide
     if(collides){
         for(size_t i = 0; i < state.enemies.size(); i++){
+            if(state.enemies[i] == nullptr){continue;}
             state.enemies[i]->velocity.x *= -1;
         }
         collides = false;
     }
-    bool hit = false;
-    //check collisions between enemies and bullets
-    for(size_t i = 0; i < state.bullets.size(); i++){
-        for(size_t j = state.enemies.size()-1; j >= 1; j--){
-            if(detectCollision(state.bullets[i],state.enemies[j])){
-                hit = true;
-                state.enemies.erase(state.enemies.begin()+j);
-                break;
-            }
-        }
-        if(hit){
-            state.bullets.erase(state.bullets.begin()+i);
-            break;
-        }
-        //Check first index of ships
-        if(detectCollision(state.bullets[i],state.enemies[0])){
-            state.enemies.erase(state.enemies.begin());
-            state.bullets.erase(state.bullets.begin()+i);
-            break;
-        }
-    }
     
-    for(size_t i = 0; i < state.enemies.size(); i++){
-        if(state.enemies[i] == nullptr){continue;}
-        state.enemies[i]->position.x += elapsed * state.enemies[i]->velocity.x;
-    }
-    for(size_t i = 0; i < state.bullets.size(); i++){
-        if(state.bullets[i] == nullptr){continue;}
-        if(state.bullets[i]->position.y > 5.0f){
-            state.bullets.erase(state.bullets.begin()+i);
-            i -=  1;
-        }else{
-            state.bullets[i]->position.y += elapsed * state.bullets[i]->velocity.y;
-        }
-    }
+    
 }
-
-Entity createBullet(Entity * player){
-    GLuint spriteSheet = LoadTexture(RESOURCE_FOLDER"sheet.png");
-    SheetSprite bull = SheetSprite(spriteSheet, 827.0f/1024.0f, 125.0f/1024.0f, 16.0f/1024.0f, 40.0f/1024.0f, .1f);
-    Entity bullet = Entity(bull, player->position.x, player->position.y + 1.0f, 0.0f, 0.0f, .5f, 0.0f);
-    return bullet;
-}
+//Function to check if player collides with the border
 bool collidesBorder(Entity * a){
     if( a->position.x >= 4.8f){
         a->position.x = 4.7f;
@@ -237,15 +214,16 @@ GameMode updateMenu(SDL_Event* event, ShaderProgram* program, Matrix& modelViewM
         program->SetModelviewMatrix(modelViewMatrix);
         modelViewMatrix.Identity();
         modelViewMatrix.Translate(0.0f, 1.0f, 0.0f);
-        DrawText(program, fonts, "Press space to start", 0.2f, 0.0f);
+        DrawText(program, fonts, "Press Q to start", 0.2f, 0.0f);
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
-        if(keys[SDL_SCANCODE_SPACE]){
+        if(keys[SDL_SCANCODE_Q]){
             return STATE_GAME_LEVEL;
         }
         SDL_GL_SwapWindow(displayWindow);
     }
     return STATE_MAIN_MENU;
 }
+
 void RenderGameState(ShaderProgram *p, const GameState &state, Matrix &projectionMatrix, Matrix &modelViewMatrix){
     glUseProgram(p->programID);
     //Draw player ship
@@ -269,6 +247,7 @@ void RenderGameState(ShaderProgram *p, const GameState &state, Matrix &projectio
     
     //Draw bullets
     for(size_t i =0; i < state.bullets.size();i++){
+        if(state.bullets[i] == nullptr){continue;}
         modelViewMatrix.Identity();
         modelViewMatrix.Translate(state.bullets[i]->position.x, state.bullets[i]->position.y, 0.0f);
         p->SetProjectionMatrix(projectionMatrix);
@@ -276,8 +255,13 @@ void RenderGameState(ShaderProgram *p, const GameState &state, Matrix &projectio
         state.bullets[i]->Draw(p);
     }
 }
-bool checkAllDone(GameState &state){
-    return state.enemies.size() == 0;
+//Checks if game over
+bool checkGameOver(GameState &state){
+    for(size_t i = 0; i < state.enemies.size(); i++){
+        if(state.enemies[i]!=nullptr)
+            return false;
+    }
+    return true;
 }
 int main(int argc, char *argv[])
 {
@@ -295,13 +279,17 @@ int main(int argc, char *argv[])
     GLuint fonts = LoadTexture(RESOURCE_FOLDER"pixel_font.png");
     GameMode mode = STATE_MAIN_MENU;
     GLuint spriteSheet = LoadTexture(RESOURCE_FOLDER"sheet.png");
-    SheetSprite play = SheetSprite(spriteSheet, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, .4f);
-    Entity player = Entity(play, 0.0f, -2.7f, 0.0f, .1f, .1f, 0.0f);
+    SheetSprite bull = SheetSprite(spriteSheet, 827.0f/1024.0f, 125.0f/1024.0f, 16.0f/1024.0f, 40.0f/1024.0f, .2f);
+    SheetSprite play = SheetSprite(spriteSheet, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, .5f);
+    Entity player = Entity(play, 0.0f, -3.5f, 0.0f, .1f, .1f, 0.0f);
     GameState state = GameState(&player);
+    Entity * eBullet = new Entity(bull,  rand() % 11 - 4, .5f, 0.0f, 0.0f, -.5f, 0.0f);
     SDL_Event event;
+    bool enemyBullet = false;
     float frameTicks = 0.0f;
+    float accumulator = 0.0f;
     bool done = false;
-    while(!done)
+    while(!done){
         switch(mode){
             case STATE_MAIN_MENU:
                 mode = updateMenu(&event,&program,modelViewMatrix,projectionMatrix, done, fonts);
@@ -312,34 +300,64 @@ int main(int argc, char *argv[])
                         if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
                             done = true;
                         }
-                        glClearColor(0.75f,0.86f,0.96f,1.0f);   //Change to light blue background
-                        glClear(GL_COLOR_BUFFER_BIT);
-                        glUseProgram(program.programID);
-                        
-                        float ticks = (float)SDL_GetTicks()/1000.0f;
-                        float elapsed = ticks - frameTicks;
-                        frameTicks = ticks;
-                        const Uint8 *keys = SDL_GetKeyboardState(NULL);
-                        if(keys[SDL_SCANCODE_LEFT] && !collidesBorder(state.player)){
-                            state.player->position.x -= 1.5f * elapsed;
-                        }else if(keys[SDL_SCANCODE_RIGHT] && !collidesBorder(state.player)){
-                            state.player->position.x += 1.5f * elapsed;
-                        }else if(keys[SDL_SCANCODE_SPACE]){
-                            Entity bull = createBullet(state.player);
-                            state.addBullet(&bull);
-                        }
-                        RenderGameState(&program, state, projectionMatrix, modelViewMatrix);
-                        //Updates by one frame
-                        updateGame(state,ticks);
-                        if(checkAllDone(state)){
-                            mode = STATE_MAIN_MENU;
-                        }
-                        SDL_GL_SwapWindow(displayWindow);
                     }
+                    glClearColor(0.75f,0.86f,0.96f,1.0f);   //Change to light blue background
+                    glClear(GL_COLOR_BUFFER_BIT);
+                    glUseProgram(program.programID);
+                        
+                    float ticks = (float)SDL_GetTicks()/1000.0f;
+                    float elapsed = ticks - frameTicks;
+                    frameTicks = ticks;
+                    const Uint8 *keys = SDL_GetKeyboardState(NULL);
+                    if(keys[SDL_SCANCODE_LEFT] && !collidesBorder(state.player)){
+                        state.player->position.x -= 1.5f * elapsed;
+                    }else if(keys[SDL_SCANCODE_RIGHT] && !collidesBorder(state.player)){
+                        state.player->position.x += 1.5f * elapsed;
+                    }else if(keys[SDL_SCANCODE_SPACE]){
+                        Entity * bullet = new Entity(bull, state.player->position.x, state.player->position.y + 1.0f, 0.0f, 0.0f, .5f, 0.0f);
+                        state.bullets.push_back(bullet);
+                    }
+                    if(!enemyBullet){
+                        state.bullets.push_back(eBullet);
+                        enemyBullet = true;
+                    }else{
+                        if(detectCollision(eBullet, state.player)){
+                            //Clear screen on player hit
+                            glClearColor(0.75f,0.86f,0.96f,1.0f);
+                            glClear(GL_COLOR_BUFFER_BIT);
+                        }
+                        else if(eBullet->position.y < -4.8){
+                            for(size_t i = 0; i < state.bullets.size(); i++){
+                                if(state.bullets[i] == eBullet){
+                                    state.bullets.erase(state.bullets.begin()+i);
+                                    break;
+                                }
+                            }
+                            eBullet = new Entity(bull, rand() % 11 - 4, .5f, 0.0f, 0.0f, -.5f, 0.0f);
+                            state.bullets.push_back(eBullet);
+                        }
+                    }
+                    
+                    elapsed += accumulator;
+                    if(elapsed < FIXED_TIMESTEP){
+                        accumulator = elapsed;
+                        continue;
+                    }
+                    while(elapsed >= FIXED_TIMESTEP){
+                        updateGame(state,elapsed);
+                        elapsed -= FIXED_TIMESTEP;
+                    }
+                    accumulator = elapsed;
+                    
+                    //Display the entities
+                    RenderGameState(&program, state, projectionMatrix, modelViewMatrix);
+                    
+                    SDL_GL_SwapWindow(displayWindow);
                 }
-                
-        }
-    
+            }   //End switch
+    }
+
+
     SDL_Quit();
     return 0;
 }
