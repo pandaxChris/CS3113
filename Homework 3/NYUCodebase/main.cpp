@@ -124,15 +124,23 @@ vector<Entity *>  getSprites(){
 }
 //Function to detect top bottom collision between entities
 bool detectCollision(Entity * a, Entity * b){
-    //Top of a collides with bottom of b
-    if(abs(a->position.x - b->position.x) < .05 && (a->position.y + a->sprite.size/2) > (b->position.y - b->sprite.size/2) )
-        return true;
-    //Bottom of a collides with top of b
-    else if(abs(a->position.x - b->position.x) < .05 && (a->position.y - a->sprite.size/2) > (b->position.y + b->sprite.size/2) )
-        return true;
     
-    //No collision
-    return false;
+    //Top of A less than bottom of B
+    if((a->position.y + a->sprite.size/2) < (b->position.y - b->sprite.size/2) )
+        return false;
+    //Bottom of A higher than top of B
+    else if( (a->position.y - a->sprite.size/2) > (b->position.y + b->sprite.size/2) )
+        return false;
+    //Left of A greater than right of B
+    else if ( (a->position.x - a->sprite.size/2) > (b->position.x + b->sprite.size/2) )
+        return false;
+    //Right of A smaller than left of B
+    else if( (a->position.x + a->sprite.size/2) < (b->position.x - b->sprite.size/2) ){
+        return false;
+    }
+    
+    // collision
+    return true;
 }
 class GameState{
 public:
@@ -150,6 +158,22 @@ public:
     vector<Entity *> enemies;
     vector<Entity *> bullets;
 };
+void modifyCollisions(GameState & state){
+
+    for(int i = 0; i < state.enemies.size(); i++){
+        if(state.enemies[i] == nullptr){continue;}
+        for(int j = 0; j < state.bullets.size(); j++){
+            if(state.bullets[j] == nullptr){continue;}
+            
+            if(detectCollision(state.bullets[j], state.enemies[i])){
+                state.bullets[j] = nullptr;
+                state.enemies[i] = nullptr;
+                return;
+            }
+        }
+
+    }
+}
 //Updates gameState
 void updateGame(GameState &state, float elapsed){
     
@@ -181,7 +205,7 @@ void updateGame(GameState &state, float elapsed){
         }
         collides = false;
     }
-    
+    modifyCollisions(state);
     
 }
 //Function to check if player collides with the border
@@ -195,6 +219,8 @@ bool collidesBorder(Entity * a){
     }
     return false;
 }
+
+
 GameMode updateMenu(SDL_Event* event, ShaderProgram* program, Matrix& modelViewMatrix, Matrix& projectionMatrix, bool done, GLuint fonts){
     while (!done) {
         while (SDL_PollEvent(event)) {
@@ -279,7 +305,7 @@ int main(int argc, char *argv[])
     GLuint fonts = LoadTexture(RESOURCE_FOLDER"pixel_font.png");
     GameMode mode = STATE_MAIN_MENU;
     GLuint spriteSheet = LoadTexture(RESOURCE_FOLDER"sheet.png");
-    SheetSprite bull = SheetSprite(spriteSheet, 827.0f/1024.0f, 125.0f/1024.0f, 16.0f/1024.0f, 40.0f/1024.0f, .2f);
+    SheetSprite bull = SheetSprite(spriteSheet, 827.0f/1024.0f, 125.0f/1024.0f, 16.0f/1024.0f, 40.0f/1024.0f, .4f);
     SheetSprite play = SheetSprite(spriteSheet, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, .5f);
     Entity player = Entity(play, 0.0f, -3.5f, 0.0f, .1f, .1f, 0.0f);
     GameState state = GameState(&player);
@@ -321,7 +347,7 @@ int main(int argc, char *argv[])
                         state.bullets.push_back(eBullet);
                         enemyBullet = true;
                     }else{
-                        if(detectCollision(eBullet, state.player)){
+                        if(detectCollision(state.player, eBullet)){
                             //Clear screen on player hit
                             glClearColor(0.75f,0.86f,0.96f,1.0f);
                             glClear(GL_COLOR_BUFFER_BIT);
