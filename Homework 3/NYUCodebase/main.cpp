@@ -124,7 +124,6 @@ vector<Entity *>  getSprites(){
 }
 //Function to detect top bottom collision between entities
 bool detectCollision(Entity * a, Entity * b){
-    
     //Top of A less than bottom of B
     if((a->position.y + a->sprite.size/2) < (b->position.y - b->sprite.size/2) )
         return false;
@@ -158,6 +157,7 @@ public:
     vector<Entity *> enemies;
     vector<Entity *> bullets;
 };
+//Function to check for the bullet ship collision in the gamestate and modifies accordingly
 void modifyCollisions(GameState & state){
 
     for(int i = 0; i < state.enemies.size(); i++){
@@ -289,6 +289,18 @@ bool checkGameOver(GameState &state){
     }
     return true;
 }
+Entity* getDownwardBullet(const GameState & state){
+    Entity *e = nullptr;
+    for(int i = 0; i < state.bullets.size(); i++){
+        if(state.bullets[i] == nullptr){continue;}
+        if(state.bullets[i]->velocity.y < 0){
+            e = state.bullets[i];
+            break;
+        }
+    }
+    return e;
+}
+
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -308,8 +320,8 @@ int main(int argc, char *argv[])
     SheetSprite bull = SheetSprite(spriteSheet, 827.0f/1024.0f, 125.0f/1024.0f, 16.0f/1024.0f, 40.0f/1024.0f, .4f);
     SheetSprite play = SheetSprite(spriteSheet, 224.0f/1024.0f, 832.0f/1024.0f, 99.0f/1024.0f, 75.0f/1024.0f, .5f);
     Entity player = Entity(play, 0.0f, -3.5f, 0.0f, .1f, .1f, 0.0f);
-    GameState state = GameState(&player);
-    Entity * eBullet = new Entity(bull,  rand() % 11 - 4, .5f, 0.0f, 0.0f, -.5f, 0.0f);
+    GameState state;
+    Entity * eBullet;
     SDL_Event event;
     bool enemyBullet = false;
     float frameTicks = 0.0f;
@@ -321,19 +333,23 @@ int main(int argc, char *argv[])
                 mode = updateMenu(&event,&program,modelViewMatrix,projectionMatrix, done, fonts);
                 break;
             case STATE_GAME_LEVEL:
+                state = GameState(&player);
+                
                 while (!done) {
                     while (SDL_PollEvent(&event)) {
                         if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
                             done = true;
                         }
                     }
+                    
                     glClearColor(0.75f,0.86f,0.96f,1.0f);   //Change to light blue background
                     glClear(GL_COLOR_BUFFER_BIT);
                     glUseProgram(program.programID);
-                        
+                    
                     float ticks = (float)SDL_GetTicks()/1000.0f;
                     float elapsed = ticks - frameTicks;
                     frameTicks = ticks;
+                    //Handle user key presses
                     const Uint8 *keys = SDL_GetKeyboardState(NULL);
                     if(keys[SDL_SCANCODE_LEFT] && !collidesBorder(state.player)){
                         state.player->position.x -= 1.5f * elapsed;
@@ -342,25 +358,29 @@ int main(int argc, char *argv[])
                     }else if(keys[SDL_SCANCODE_SPACE]){
                         Entity * bullet = new Entity(bull, state.player->position.x, state.player->position.y + 1.0f, 0.0f, 0.0f, .5f, 0.0f);
                         state.bullets.push_back(bullet);
+                        enemyBullet = true;
                     }
-                    if(!enemyBullet){
+                    //Handle enemy shooting bullet
+                    if(!enemyBullet){   //No enemy bullet
+                        eBullet = new Entity(bull,  rand() % 11 - 4, .5f, 0.0f, 0.0f, -.5f, 0.0f);
                         state.bullets.push_back(eBullet);
                         enemyBullet = true;
                     }else{
-                        if(detectCollision(state.player, eBullet)){
-                            //Clear screen on player hit
-                            glClearColor(0.75f,0.86f,0.96f,1.0f);
-                            glClear(GL_COLOR_BUFFER_BIT);
+                        Entity * bullet = getDownwardBullet(state);
+                        //Check if hit player
+                        if(detectCollision(state.player,bullet)){
+                            //Close window upon win
+                            done=true;
                         }
-                        else if(eBullet->position.y < -4.8){
+                        //Else check if it's below screen
+                        else if(bullet->position.y < -4.8){
                             for(size_t i = 0; i < state.bullets.size(); i++){
-                                if(state.bullets[i] == eBullet){
+                                if(state.bullets[i] == bullet){
                                     state.bullets.erase(state.bullets.begin()+i);
                                     break;
                                 }
                             }
-                            eBullet = new Entity(bull, rand() % 11 - 4, .5f, 0.0f, 0.0f, -.5f, 0.0f);
-                            state.bullets.push_back(eBullet);
+                            enemyBullet = false;
                         }
                     }
                     
@@ -377,7 +397,9 @@ int main(int argc, char *argv[])
                     
                     //Display the entities
                     RenderGameState(&program, state, projectionMatrix, modelViewMatrix);
-                    
+                    if(checkGameOver(state)){
+                        done = true;
+                    }
                     SDL_GL_SwapWindow(displayWindow);
                 }
             }   //End switch
