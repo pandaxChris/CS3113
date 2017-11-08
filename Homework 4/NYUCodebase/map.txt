@@ -32,3 +32,8 @@ data=
 type=Character
 location=13,4,1,1
 
+[Object Layer 1]
+# Block
+type=Block
+location=16,3,1,1
+
