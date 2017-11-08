@@ -1,3 +1,8 @@
+/*
+Chris Li
+Homework 4
+What's not working fully: Collision, scrolling
+*/
 #ifdef _WINDOWS
 #include <GL/glew.h>
 #endif
@@ -27,7 +32,7 @@ int mapHeight;
 int SPRITE_COUNT_X = 8;
 int SPRITE_COUNT_Y = 4;
 int** levelData;
-float TILE_SIZE = .5;
+float TILE_SIZE = .2;
 SDL_Window* displayWindow;
 
 
@@ -122,6 +127,14 @@ public:
     
     void Draw(ShaderProgram &program){ sprite.Draw(&program); }
     
+    bool onFloor(){
+        int gridX, gridY;
+        worldToTileCoordinates(position.x, position.y, &gridX, &gridY);
+        if(levelData[abs(gridY)+1][gridX] != 0){
+            position.y += TILE_SIZE*gridY;
+        }
+        return false;
+    }
     void move(float elapsed){
         if(!isStatic){
             
@@ -139,34 +152,53 @@ public:
                 acceleration.x += .05;
             }
             
-            if(acceleration.y > 0.0){
-                acceleration.y -= 1.1;
-            }else if(acceleration.y < -5.0){
-                acceleration.y = -5.0;
-            }else if(acceleration.y < -0.0){
-                acceleration.y -= 1.1;
+            if(!onFloor()){
+                if(acceleration.y > 0.0){
+                    acceleration.y -= 1.1;
+                }else if(acceleration.y < -5.0){
+                    acceleration.y = -5.0;
+                }else if(acceleration.y < 0.0){
+                    acceleration.y -= 1.1;
+                }
+            }else{
+                acceleration.y = 0.0;
             }
             velocity.x += acceleration.x * elapsed;
             velocity.y += acceleration.y * elapsed;
             
             position.x += velocity.x * elapsed;
-            //In bounds
-            if(position.y < -.81){
-                position.y = -.8;
-            }else{
-                position.y += velocity.y * elapsed;
-            }
+            position.y += velocity.y * elapsed;
+
         }
+    }
+    void collidesWith(Entity *e){
+
+        //If bottom collides with top of other
+        if((position.y-sprite.size/2) <= (e->position.y+e->sprite.size/2)){
+            position.y += 0.5f;
+            e->position.y -=.5f;
+            
+        }else{collidedBottom=false;}
+        //If top collides with bottom of other
+        if((position.y+sprite.size/2) >= (e->position.y-e->sprite.size/2)){
+            position.y -= 0.5f;
+            e->position.y += 0.5f;
+        }else{collidedTop = false;}
+        //If right collides with left of other
+        if((position.x+sprite.size/2) <= (e->position.x-e->sprite.size/2)){
+            position.x -= 0.5f;
+            e->position.x += 0.5f;
+
+        }else{collidedRight = false;}
+        //If left collides with right of other
+        if((position.x-sprite.size/2) >= (e->position.x+e->sprite.size/2)){
+            position.x += 0.5f;
+            e->position.x -= 0.5f;
+
+        }
+
     }
     
-    void handleCollisions(Entity * e){
-        int gridX, gridY;
-        
-        if(collidedTop){
-            worldToTileCoordinates(position.x, position.y, &gridX, &gridY);
-            
-        }
-    }
     SheetSprite sprite;
     EntityType entType;
     Vector friction;
@@ -188,8 +220,11 @@ vector<Entity *> entities;
 void placeEntity(string type, int posX, int posY){
     GLuint sprites = LoadTexture(RESOURCE_FOLDER"arne_sprites.png");
     SheetSprite player = SheetSprite(sprites, 0.0f/128.0f, 64.0f/128.0f, 16.0f/256.0f, 32.0f/128.0f, 1.5f);
+    SheetSprite block = SheetSprite(sprites, 0.0f, 0.0f/128.0f, 32.0f/256.0f, 32.0f/128.0f, 1.5f);
     if(type == "Character"){
         entities.push_back(new Entity(ENTITY_PLAYER, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 2.0,2.0, 1.0, 1.0, 0.0, false, player));
+    }else if(type == "Block"){
+        entities.push_back(new Entity(ENTITY_BALL, 3.0, 0.0, 1.0, 1.0, 0.0, 0.0, 2.0,2.0, 1.0, 1.0, 0.0, false, block));
     }
     
 }
@@ -333,19 +368,6 @@ void drawEntities(ShaderProgram &p, Matrix &proj, Matrix & mv){
     }
 }
 
-//Function to check if player collides with the border
-bool collidesBorder(Entity * a){
-    if( a->position.x >= 15.0f){
-        a->position.x = 14.9f;
-        return true;
-    }else if(a->position.x <= -30.0f){
-        a->position.x = -29.9f;
-        return true;
-    }
-    return false;
-}
-
-
 int main(int argc, char *argv[])
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -379,19 +401,17 @@ int main(int argc, char *argv[])
 				done = true;
 			}
 		}
+        glUseProgram(program.programID);
         program.SetProjectionMatrix(projectionMatrix);
         program.SetModelviewMatrix(modelViewMatrix);
-        drawTiles(&program, sprites);
-        glUseProgram(program.programID);
+
         glClearColor(0.75f,0.86f,0.96f,1.0f);   //Change to light blue background
         glClear(GL_COLOR_BUFFER_BIT);
         
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
         if(keys[SDL_SCANCODE_LEFT]){
-            //entities[0]->position.x += entities[0]->velocity.x * elapsed;
             entities[0]->acceleration.x -= .2;
         }else if(keys[SDL_SCANCODE_RIGHT]){
-            //entities[0]->position.x -= entities[0]->velocity.x * elapsed;
             entities[0]->acceleration.x += .2;
         }else if(keys[SDL_SCANCODE_UP]){
             entities[0]->acceleration.y = 5.0;
@@ -408,17 +428,28 @@ int main(int argc, char *argv[])
         }
 
         while(elapsed >= FIXED_TIMESTEP){
-            entities[0]->move(elapsed);
-            modelViewMatrix.Identity();
-            modelViewMatrix.Translate(entities[0]->position.x, entities[0]->position.y, 0);
-            program.SetModelviewMatrix(modelViewMatrix);
-            
-            entities[0]->Draw(program);
-
+            //Draw each entity
+            for(size_t i = 0 ; i < entities.size(); i ++){
+                entities[i]->move(elapsed);
+                if(entities[i]->entType != ENTITY_BALL){
+                    entities[i]->collidesWith(entities[0]);
+                }
+                modelViewMatrix.Identity();
+                modelViewMatrix.Translate(entities[i]->position.x, entities[0]->position.y,0);
+                program.SetModelviewMatrix(modelViewMatrix);
+                entities[i]->Draw(program);
+                modelViewMatrix.Translate(-entities[0]->position.x, -entities[0]->position.y,0);
+                program.SetModelviewMatrix(modelViewMatrix);
+            }
             elapsed -= FIXED_TIMESTEP;
         }
+
         accumulator = elapsed;
-        modelViewMatrix.Translate(-entities[0]->position.x, -entities[0]->position.y, 0);
+        modelViewMatrix.Translate(-5.0,0.0,0.0);
+        program.SetModelviewMatrix(modelViewMatrix);
+        drawTiles(&program, sprites);
+        
+        drawEntities(program, projectionMatrix, modelViewMatrix);
 		SDL_GL_SwapWindow(displayWindow);
 	}
 
