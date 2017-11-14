@@ -1,8 +1,3 @@
-/*
-Chris Li
-Homework 4
-What's not working fully: Collision, scrolling
-*/
 #ifdef _WINDOWS
 #include <GL/glew.h>
 #endif
@@ -431,7 +426,7 @@ int main(int argc, char *argv[])
             //Draw each entity
             for(size_t i = 0 ; i < entities.size(); i ++){
                 entities[i]->move(elapsed);
-                if(entities[i]->entType != ENTITY_PLAYER){
+                if(entities[i]->entType != ENTITY_BALL){
                     entities[i]->collidesWith(entities[0]);
                 }
                 modelViewMatrix.Identity();
@@ -450,7 +445,7 @@ int main(int argc, char *argv[])
         drawTiles(&program, sprites);
         
         drawEntities(program, projectionMatrix, modelViewMatrix);
-	SDL_GL_SwapWindow(displayWindow);
+		SDL_GL_SwapWindow(displayWindow);
 	}
 
 	SDL_Quit();
