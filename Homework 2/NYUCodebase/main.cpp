@@ -1,6 +1,13 @@
 /*
  Chris Li cl3250
  Assignment 2: Pong
+ 
+ Sounds taken from FreeSound.org:
+ 
+ https://freesound.org/people/AbbasGamez/sounds/411443/
+ https://freesound.org/people/Greek555/sounds/411556/
+ https://freesound.org/people/LovelyFriendAli/sounds/411614/
+ https://freesound.org/people/davidbain/sounds/135831/
 */
 
 #ifdef _WINDOWS
@@ -9,6 +16,8 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
+#include <unistd.h>
 #include "Matrix.h"
 #include "ShaderProgram.h"
 #include <math.h>
@@ -102,6 +111,21 @@ int main(int argc, char *argv[])
     //Ball constants -- will always start off with the ball going to the right side
     float ballXVelocity = 3.0f;
     float ballYVelocity = 1.0f;
+    
+    //Load all the sounds used for the game
+    Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 4096 );
+    Mix_Music *bgSound;
+    bgSound = Mix_LoadMUS(RESOURCE_FOLDER"411556__greek555__sample-126-bpm.mp3");
+    Mix_Chunk *hitSound;
+    hitSound = Mix_LoadWAV(RESOURCE_FOLDER"411614__lovelyfriendali__snare-1.wav");
+    Mix_Chunk *borderSound;
+    borderSound = Mix_LoadWAV(RESOURCE_FOLDER"411443__abbasgamez__powerup2.wav");
+    Mix_Chunk *ending;
+    ending = Mix_LoadWAV(RESOURCE_FOLDER"135831__davidbain__end-game-fail.wav");
+    
+    //Start the background theme
+    Mix_PlayMusic(bgSound, -1);
+    
 	while (!done) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
@@ -115,11 +139,14 @@ int main(int argc, char *argv[])
         
         
         
-        if(!inBoundsTop(ball) || !inBoundsBot(ball))    //Check to make sure it bounces off top/bottom boundaries
+        if(!inBoundsTop(ball) || !inBoundsBot(ball)){    //Check to make sure it bounces off top/bottom boundaries
             ballYVelocity *= -1;
-            
-        if(checkCollision(rightPad,ball) || checkCollision(leftPad,ball))
+            Mix_PlayChannel(-1, borderSound, 0);
+        }
+        if(checkCollision(rightPad,ball) || checkCollision(leftPad,ball)){
             ballXVelocity *= -1;
+            Mix_PlayChannel(-1, hitSound, 0);
+        }
         
         moveItem(cos(3.14/3) * elapsed * ballXVelocity, sin(3.14/3) * elapsed * ballYVelocity, ball);
         
@@ -152,10 +179,17 @@ int main(int argc, char *argv[])
         if(checkEndGame(ball)){
             glClearColor(0.0f,0.9f,0.0f,0.0f); //Change background if someone won
             glClear(GL_COLOR_BUFFER_BIT);
+            usleep(2000);
+            Mix_PlayChannel(-1, ending, 0);
+            break;
         }
         SDL_GL_SwapWindow(displayWindow);
     
     }
+    Mix_FreeChunk(hitSound);
+    Mix_FreeChunk(borderSound);
+    Mix_FreeChunk(ending);
+    Mix_FreeMusic(bgSound);
 	SDL_Quit();
 	return 0;
 }

@@ -21,6 +21,11 @@
 		6DEF23C21B96CC2600BCE792 /* Matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BC1B96CC2600BCE792 /* Matrix.cpp */; };
 		6DEF23C31B96CC2600BCE792 /* ShaderProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */; };
 		6DEF23C41B96CC2600BCE792 /* vertex.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 6DEF23C01B96CC2600BCE792 /* vertex.glsl */; };
+		832C4E5F1FCB974300C8A86F /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 832C4E5E1FCB974300C8A86F /* SDL2_mixer.framework */; };
+		832C4E631FCB997200C8A86F /* 411556__greek555__sample-126-bpm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 832C4E601FCB997200C8A86F /* 411556__greek555__sample-126-bpm.mp3 */; };
+		832C4E641FCB997200C8A86F /* 411614__lovelyfriendali__snare-1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 832C4E611FCB997200C8A86F /* 411614__lovelyfriendali__snare-1.wav */; };
+		832C4E671FCB9D2F00C8A86F /* 411443__abbasgamez__powerup2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 832C4E661FCB9D2F00C8A86F /* 411443__abbasgamez__powerup2.wav */; };
+		832C4E691FCB9EF800C8A86F /* 135831__davidbain__end-game-fail.wav in Resources */ = {isa = PBXBuildFile; fileRef = 832C4E681FCB9EF800C8A86F /* 135831__davidbain__end-game-fail.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +52,11 @@
 		6DEF23BE1B96CC2600BCE792 /* ShaderProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShaderProgram.cpp; sourceTree = "<group>"; };
 		6DEF23BF1B96CC2600BCE792 /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderProgram.h; sourceTree = "<group>"; };
 		6DEF23C01B96CC2600BCE792 /* vertex.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = vertex.glsl; sourceTree = "<group>"; };
+		832C4E5E1FCB974300C8A86F /* SDL2_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_mixer.framework; path = ../../../../../Library/Frameworks/SDL2_mixer.framework; sourceTree = "<group>"; };
+		832C4E601FCB997200C8A86F /* 411556__greek555__sample-126-bpm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "411556__greek555__sample-126-bpm.mp3"; sourceTree = "<group>"; };
+		832C4E611FCB997200C8A86F /* 411614__lovelyfriendali__snare-1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "411614__lovelyfriendali__snare-1.wav"; sourceTree = "<group>"; };
+		832C4E661FCB9D2F00C8A86F /* 411443__abbasgamez__powerup2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = 411443__abbasgamez__powerup2.wav; sourceTree = "<group>"; };
+		832C4E681FCB9EF800C8A86F /* 135831__davidbain__end-game-fail.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "135831__davidbain__end-game-fail.wav"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +65,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D5AC2D019AE6280004CB1BF /* OpenGL.framework in Frameworks */,
+				832C4E5F1FCB974300C8A86F /* SDL2_mixer.framework in Frameworks */,
 				6D5A86AE19AE5C710066C1FD /* Cocoa.framework in Frameworks */,
 				6D5A86E319AE5CD10066C1FD /* SDL2.framework in Frameworks */,
 				6D5AC2D219AE6A1E004CB1BF /* SDL2_image.framework in Frameworks */,
@@ -89,6 +100,7 @@
 				6D5AC2CF19AE6280004CB1BF /* OpenGL.framework */,
 				6D5A86E219AE5CD10066C1FD /* SDL2.framework */,
 				6D5A86AD19AE5C710066C1FD /* Cocoa.framework */,
+				832C4E5E1FCB974300C8A86F /* SDL2_mixer.framework */,
 				6D5A86AF19AE5C710066C1FD /* Other Frameworks */,
 			);
 			name = Frameworks;
@@ -144,6 +156,10 @@
 		6D5A86E119AE5CAA0066C1FD /* Code */ = {
 			isa = PBXGroup;
 			children = (
+				832C4E681FCB9EF800C8A86F /* 135831__davidbain__end-game-fail.wav */,
+				832C4E661FCB9D2F00C8A86F /* 411443__abbasgamez__powerup2.wav */,
+				832C4E601FCB997200C8A86F /* 411556__greek555__sample-126-bpm.mp3 */,
+				832C4E611FCB997200C8A86F /* 411614__lovelyfriendali__snare-1.wav */,
 				6DEF23BB1B96CC2600BCE792 /* fragment.glsl */,
 				6DE9D2F01BA6AB8C002D599C /* fragment_textured.glsl */,
 				6DC707691BA7273500225B7D /* vertex_textured.glsl */,
@@ -212,11 +228,15 @@
 			files = (
 				6D5A86B819AE5C710066C1FD /* InfoPlist.strings in Resources */,
 				6DEF23C11B96CC2600BCE792 /* fragment.glsl in Resources */,
+				832C4E671FCB9D2F00C8A86F /* 411443__abbasgamez__powerup2.wav in Resources */,
 				6DE9D2F11BA6AB8C002D599C /* fragment_textured.glsl in Resources */,
 				6D5A86C619AE5C710066C1FD /* Images.xcassets in Resources */,
+				832C4E641FCB997200C8A86F /* 411614__lovelyfriendali__snare-1.wav in Resources */,
 				6D5A86BE19AE5C710066C1FD /* Credits.rtf in Resources */,
+				832C4E631FCB997200C8A86F /* 411556__greek555__sample-126-bpm.mp3 in Resources */,
 				6DEF23C41B96CC2600BCE792 /* vertex.glsl in Resources */,
 				6DC7076A1BA7273500225B7D /* vertex_textured.glsl in Resources */,
+				832C4E691FCB9EF800C8A86F /* 135831__davidbain__end-game-fail.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,6 +369,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/Library/Frameworks/SDL2_image.framework/Versions/A/Headers,
 					/Library/Frameworks/SDL2.framework/Versions/A/Headers,
+					/Library/Frameworks/SDL2_mixer.framework/Versions/A/Headers,
 				);
 				INFOPLIST_FILE = "NYUCodebase/NYUCodebase-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -372,6 +393,7 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					/Library/Frameworks/SDL2_image.framework/Versions/A/Headers,
 					/Library/Frameworks/SDL2.framework/Versions/A/Headers,
+					/Library/Frameworks/SDL2_mixer.framework/Versions/A/Headers,
 				);
 				INFOPLIST_FILE = "NYUCodebase/NYUCodebase-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
