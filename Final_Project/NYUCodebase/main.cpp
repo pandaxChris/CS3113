@@ -554,6 +554,7 @@ int main(int argc, char *argv[])
                         for(size_t i = 0; i < state.obstacles.size(); i++){
                             if(detectCollision(state.playerOne,state.obstacles[i])){
                                 handleCollisions(state.playerOne, state.obstacles[i]);
+                                state.playerOne->score--;
                                 Mix_PlayChannel(-1, hitSound, 0);
                             }
                         }
@@ -697,10 +698,12 @@ int main(int argc, char *argv[])
                         for(size_t i = 0; i < state.obstacles.size(); i++){
                             if(detectCollision(state.playerOne,state.obstacles[i])){
                                 handleCollisions(state.playerOne, state.obstacles[i]);
+                                state.playerOne->score--;
                                 Mix_PlayChannel(-1, hitSound, 0);
                             }
                             if(detectCollision(state.playerTwo,state.obstacles[i])){
                                 handleCollisions(state.playerTwo, state.obstacles[i]);
+                                state.playerTwo->score--;
                                 Mix_PlayChannel(-1, hitSound, 0);
                             }
                         }
@@ -838,10 +841,12 @@ int main(int argc, char *argv[])
                             if(detectCollision(state.playerOne,state.obstacles[i])){
                                 handleCollisions(state.playerOne, state.obstacles[i]);
                                 Mix_PlayChannel(-1, hitSound, 0);
+                                state.playerOne->score--;
                             }
                             if(detectCollision(state.playerTwo,state.obstacles[i])){
                                 handleCollisions(state.playerTwo, state.obstacles[i]);
                                 Mix_PlayChannel(-1, hitSound, 0);
+                                state.playerTwo->score--;
                             }
                         }
                         float ticks = (float)SDL_GetTicks()/1000.0f;
